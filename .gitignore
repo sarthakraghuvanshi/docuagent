@@ -1,0 +1,34 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+.venv/
+venv/
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+build/
+dist/
+
+# Env / secrets
+.env
+.env.*
+!.env.example
+
+# Data
+data/raw/*
+!data/raw/.gitkeep
+*.pdf
+*.docx
+
+# Reports (evidence trail JSON is kept; scratch not)
+reports/*.tmp
+
+# Docker / OS
+.DS_Store
+docker-compose.override.yml
+
+# IDE
+.vscode/
+.idea/
