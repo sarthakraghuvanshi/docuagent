@@ -41,6 +41,12 @@ services:
 
   ollama:
     image: ollama/ollama:latest
+    environment:
+      # Unload the model (and its per-prompt cache) immediately after each
+      # response. Without this, Ollama accumulates a full KV-cache snapshot
+      # per distinct prompt with no eviction, which OOM-crashes it during a
+      # batch eval run where every question has different context.
+      OLLAMA_KEEP_ALIVE: "0"
     ports:
       - "11434:11434"
     volumes:
@@ -76,6 +82,8 @@ services:
     volumes:
       - ./src:/app/src
       - ./data:/app/data
+      - ./configs:/app/configs
+      - ./reports:/app/reports
 
   worker:
     build: .
@@ -91,6 +99,8 @@ services:
     volumes:
       - ./src:/app/src
       - ./data:/app/data
+      - ./configs:/app/configs
+      - ./reports:/app/reports
 
 volumes:
   postgres_data:

@@ -1,0 +1,24 @@
+name: baseline
+description: >
+  Phase 1 naive RAG - dense-only vector retrieval, no reranking, no hybrid
+  search, no self-healing agent loop. This is the floor every later phase
+  is measured against.
+
+retrieval:
+  strategy: dense   # dense (Phase 1) | hybrid (Phase 3)
+  top_k: 5
+  rerank: false     # Phase 3
+  rerank_n: null
+
+agent:
+  self_healing: false   # Phase 4
+  max_attempts: 1
+  grade_threshold: null
+
+embedding:
+  model: BAAI/bge-small-en-v1.5
+  collection: docuagent_chunks
+
+llm:
+  provider: ollama
+  model: llama3.1:8b

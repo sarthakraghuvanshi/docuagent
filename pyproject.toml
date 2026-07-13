@@ -27,8 +27,8 @@ graph = [
     "langchain-core>=0.3",
 ]
 eval = [
-    "ragas>=0.2",
-    "datasets>=3.0",
+    "pyyaml>=6.0",
+    "numpy>=1.26",
 ]
 dev = [
     "pytest>=8.3",

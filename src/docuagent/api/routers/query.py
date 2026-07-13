@@ -3,7 +3,7 @@ from pydantic import BaseModel
 from fastapi import APIRouter
 
 from docuagent.providers.llm import get_llm
-from docuagent.retrieve.hybrid import retrieve
+from docuagent.retrieve.hybrid import RetrievedChunk, retrieve
 
 router = APIRouter(prefix="/query", tags=["query"])
 
@@ -14,6 +14,24 @@ SYSTEM_PROMPT = (
     "the context does not contain the answer, respond with exactly: "
     '"Not found in the provided documents." Never use outside knowledge.'
 )
+
+NOT_FOUND_ANSWER = "Not found in the provided documents."
+
+
+def build_context_block(hits: list[RetrievedChunk]) -> str:
+    return "\n\n".join(
+        f"[{hit.chunk_id}] (doc={hit.doc_id}, page={hit.page}): {hit.text}" for hit in hits
+    )
+
+
+def synthesize_answer(question: str, hits: list[RetrievedChunk]) -> str:
+    """The core answer-generation step, shared by the live /query route and
+    the eval harness so both exercise identical logic."""
+    if not hits:
+        return NOT_FOUND_ANSWER
+    context_block = build_context_block(hits)
+    user_prompt = f"Context:\n{context_block}\n\nQuestion: {question}"
+    return get_llm().complete(SYSTEM_PROMPT, user_prompt)
 
 
 class QueryRequest(BaseModel):
@@ -38,16 +56,7 @@ class QueryResponse(BaseModel):
 @router.post("", response_model=QueryResponse)
 def run_query(request: QueryRequest) -> QueryResponse:
     hits = retrieve(request.question, top_k=request.top_k, doc_filter=request.doc_filter)
-
-    if not hits:
-        return QueryResponse(answer="Not found in the provided documents.", citations=[])
-
-    context_block = "\n\n".join(
-        f"[{hit.chunk_id}] (doc={hit.doc_id}, page={hit.page}): {hit.text}" for hit in hits
-    )
-    user_prompt = f"Context:\n{context_block}\n\nQuestion: {request.question}"
-
-    answer = get_llm().complete(SYSTEM_PROMPT, user_prompt)
+    answer = synthesize_answer(request.question, hits)
 
     citations = [
         Citation(
